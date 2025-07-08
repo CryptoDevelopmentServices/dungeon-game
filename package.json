@@ -1,0 +1,23 @@
+{
+  "name": "dungeoncoin-backend",
+  "version": "1.0.0",
+  "description": "Backend server for DungeonCoin game",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "author": "Crypto",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "sqlite": "^5.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
