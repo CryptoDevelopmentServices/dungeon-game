@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
 import { db } from './db/sql.js';
 import authRoutes from './routes/auth.js';
@@ -9,6 +11,13 @@ import walletRoutes from './routes/wallet.js';
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '../client')));
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
