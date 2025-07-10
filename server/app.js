@@ -3,36 +3,41 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
+
 import authRoutes from './routes/auth.js';
 import gameRoutes from './routes/game.js';
 import walletRoutes from './routes/wallet.js';
-import init from './db/sql.js'
+import { init } from './db/sql.js'; // ✅ Best to use named import
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
+// Static frontend
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Serve static frontend files
 app.use(express.static(path.join(__dirname, '../client')));
 
-
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/wallet', walletRoutes);
 
+// Initialize DB and start server
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
-// Initialise Sequelize connection and models
 (async () => {
   try {
-    await init()
+    await init(); // Sequelize model and DB sync
+    console.log('✅ Database initialized');
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
+    });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Failed to initialize database:', err);
+    process.exit(1); // Exit cleanly on failure
   }
 })();

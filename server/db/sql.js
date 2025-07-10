@@ -1,51 +1,47 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
 import { Sequelize } from 'sequelize';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// initialise sequelize connection
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Create shared Sequelize instance
+const sequelize = new Sequelize({
+  storage: './database.sqlite',
+  dialect: 'sqlite',
+  logging: false,
+});
+
+const db = {};
 
 const init = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Connected to the database.');
 
-  const db = await open({
-    filename: './database.sqlite',
-    driver: sqlite3.Database
-  });
-
-// Create basic tables on startup
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE,
-      password TEXT,
-      wallet_address TEXT,
-      balance REAL DEFAULT 0
-    );
-  `);
-
-  const modelFiles= fs.readdirSync("models/").filter(file => file.endsWith(".js"));
-
-  let connection = new Sequelize({
-    storage: 'database.sqlite',
-    dialect: "sqlite",
-  });
-
-    console.log("Connected to the database...");
-    try {
-      await connection.authenticate();
-    } catch (error) {
-      console.error(error);
-    }
+    // Load all models
+    const modelsPath = path.resolve(__dirname, '../models');
+    const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith('.js'));
 
     for (const file of modelFiles) {
-      const model = await import(`../models/${file}`);
-      model.default.init(connection)
+      const modelModule = await import(`../models/${file}`);
+      const model = modelModule.default.init(sequelize);
+      db[model.name] = model;
     }
 
-  modelFiles.map(async (file) => {
-    const model = await import(`../models/${file}`);
-    model.default.associate && model.default.associate(model);
-  })
-}
+    // Setup associations
+    for (const modelName in db) {
+      if (typeof db[modelName].associate === 'function') {
+        db[modelName].associate(db);
+      }
+    }
 
-export default init;
+    await sequelize.sync();
+    console.log('✅ Tables synced.');
+  } catch (err) {
+    console.error('❌ Database init failed:', err);
+  }
+};
+
+export { init, sequelize, db };

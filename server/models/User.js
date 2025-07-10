@@ -29,7 +29,7 @@ class User extends Model {
     }
 
     static associate(models) {
-
+        // future associations here
     }
 }
 
