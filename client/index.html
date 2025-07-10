@@ -1,13 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>DungeonCoin</title>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DungeonCoin - Earn Crypto While You Play</title>
   <link rel="stylesheet" href="style.css" />
+  <script defer src="auth.js"></script>
 </head>
 <body>
-  <div id="game"></div>
-  <script type="module" src="main.js"></script>
+  <div class="container">
+    <h1>🪙 DungeonCoin</h1>
+    <p class="tagline">Play. Battle. Earn real crypto.</p>
+
+    <div class="description">
+      <p>
+        Welcome to <strong>DungeonCoin</strong> — a retro 8/16-bit style dungeon adventure game where you fight monsters, collect treasure, and earn real cryptocurrency for your progress.
+      </p>
+      <p>
+        Use your coins to upgrade weapons and armor, or withdraw them to your wallet. It's not just a game — it's a quest for real-world rewards.
+      </p>
+    </div>
+
+    <div class="auth-box">
+      <div class="form">
+        <h2>Login</h2>
+        <input type="text" id="login-username" placeholder="Username" />
+        <input type="password" id="login-password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+      </div>
+
+      <div class="form">
+        <h2>Register</h2>
+        <input type="text" id="register-username" placeholder="Username" />
+        <input type="password" id="register-password" placeholder="Password" />
+        <button onclick="register()">Register</button>
+      </div>
+    </div>
+
+    <p class="mode-links">
+      Want to dive in? <a href="index.html?mode=topdown">Top-down mode</a> | <a href="index.html?mode=sidescroller">Side-scroller mode</a>
+    </p>
+  </div>
 </body>
 </html>
