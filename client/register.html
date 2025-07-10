@@ -6,27 +6,27 @@
   <title>Register | DungeonCoin</title>
   <link rel="stylesheet" href="style.css" />
   <script type="module">
-    import { getCurrentUser } from './auth.js';
-    const user = getCurrentUser();
+  import { getCurrentUser, logout } from './auth.js';
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const nav = document.getElementById('nav-links');
-      const userBox = document.getElementById('user-box');
+  const nav = document.getElementById('nav-links');
+  const user = getCurrentUser();
 
-      if (user) {
-        nav.innerHTML = `
-          <a href="index.html">Home</a>
-          <a href="profile.html">Profile</a>
-        `;
-        userBox.innerText = `🧙 Logged in as ${user.username} — ${user.balance} 🪙`;
-      } else {
-        nav.innerHTML = `
-          <a href="index.html">Home</a>
-          <a href="login.html">Login</a>
-        `;
-      }
-    });
-  </script>
+  if (user) {
+    const balance = user.balance || "0";
+    nav.innerHTML = `
+      <a href="index.html">Home</a>
+      <a href="profile.html">Profile</a>
+      <span class="balance">🪙 ${parseFloat(balance).toFixed(2)} ADVC</span>
+      <a href="#" onclick="logout()">Logout</a>
+    `;
+    window.logout = logout;
+  } else {
+    nav.innerHTML = `
+      <a href="index.html">Home</a>
+      <a href="login.html">Login</a>
+    `;
+  }
+</script>
 </head>
 
 <body>
