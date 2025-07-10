@@ -1,16 +1,38 @@
 import express from 'express';
-import { db } from '../db/sql.js';
+import User from "../models/User.js";
 const router = express.Router();
 
-router.post('/reward', async (req, res) => {
+router.put('/reward', async (req, res) => {
   const { username, amount } = req.body;
-  await db.run('UPDATE users SET balance = balance + ? WHERE username = ?', [amount, username]);
-  res.json({ success: true });
+  await User.update(
+      {
+        balance: amount
+      },
+      {
+        where: {
+          username: username
+        }
+      }
+  );
+  res.status(200).json({ success: true });
 });
 
 router.get('/profile/:username', async (req, res) => {
-  const user = await db.get('SELECT username, balance, wallet_address FROM users WHERE username = ?', [req.params.username]);
-  res.json(user);
+  const user = await User.findOne(
+      {
+        where: {
+          username: req.params.username
+        }
+      }
+  );
+
+  if (!user) {
+      return res.status(404).json({
+          error: 'User does not exist'
+      });
+  }
+
+  res.status(200).json(user);
 });
 
 export default router;
