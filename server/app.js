@@ -3,10 +3,10 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
-import { db } from './db/sql.js';
 import authRoutes from './routes/auth.js';
 import gameRoutes from './routes/game.js';
 import walletRoutes from './routes/wallet.js';
+import init from './db/sql.js'
 
 const app = express();
 app.use(cors());
@@ -27,3 +27,12 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Initialise Sequelize connection and models
+(async () => {
+  try {
+    await init()
+  } catch (err) {
+    console.error(err);
+  }
+})();
