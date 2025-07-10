@@ -1,20 +1,28 @@
 import express from 'express';
 import User from "../models/User.js";
+import methods from "../daemon/methods.js";
 const router = express.Router();
 
 router.put('/reward', async (req, res) => {
-  const { username, amount } = req.body;
-  await User.update(
+    const { username, amount } = req.body;
+
+    // try update balance on daemon side first
+    await methods.moveAmount(
+        "",
+        username,
+        amount
+    )
+
+    await User.increment(
       {
-        balance: amount
+          balance: amount
       },
       {
-        where: {
-          username: username
-        }
+          where: { username: username }
       }
-  );
-  res.status(200).json({ success: true });
+    );
+
+    res.status(200).json({ success: true });
 });
 
 router.get('/profile/:username', async (req, res) => {
