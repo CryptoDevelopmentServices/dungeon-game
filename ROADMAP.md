@@ -86,7 +86,7 @@
 # ✅ Action Plan: What To Do Next
 
 ### Phase 1: Game Engine Logic (Top-down)
-- Build out `client/scenes/topdown.js` with:
+- Build out `client/modes/topdown.js` with:
   - Tilemap loader  
   - Player movement  
   - Coin pickup & server sync  
