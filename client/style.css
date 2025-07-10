@@ -84,6 +84,23 @@ h1 {
   background: orange;
 }
 
+.message {
+  margin-top: 10px;
+  font-size: 12px;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.message.error {
+  background-color: #550000;
+  color: #ff8080;
+}
+
+.message.success {
+  background-color: #004400;
+  color: #80ff80;
+}
+
 .mode-links a {
   color: #7fff00;
   text-decoration: none;
@@ -92,4 +109,57 @@ h1 {
 
 .mode-links a:hover {
   text-decoration: underline;
+}
+
+/* .navbar {
+  background-color: #222;
+  padding: 10px;
+  text-align: center;
+  border-bottom: 2px solid #444;
+}
+
+.navbar a {
+  margin: 0 10px;
+  color: #fff;
+  text-decoration: none;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+} */
+
+/* === NAVBAR === */
+.navbar {
+  background: #1a1a1a;
+  padding: 12px 0;
+  text-align: center;
+  /*border-bottom: 3px solid #3c3c3c;*/
+  box-shadow: 0 4px 8px #00000088;
+  /*font-family: 'Press Start 2P', monospace;*/
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.navbar a {
+  display: inline-block;
+  margin: 0 15px;
+  color: #f0f0f0;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 12px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.navbar a:hover {
+  color: #00ffcc;
+  border: 2px solid #00ffcc;
+  background-color: #111;
+  text-shadow: 0 0 5px #00ffcc;
+}
+
+.user-info {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #aaa;
+  font-family: 'Press Start 2P', monospace;
 }

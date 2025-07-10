@@ -1,0 +1,33 @@
+<!-- client/profile.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | DungeonCoin</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module">
+    import { getCurrentUser, logout } from './auth.js';
+    const user = getCurrentUser();
+
+    if (!user) {
+      window.location.href = 'index.html';
+    }
+
+    window.onload = () => {
+      document.getElementById('username').textContent = user.username;
+      document.getElementById('wallet').textContent = user.wallet_address;
+      document.getElementById('balance').textContent = user.balance + ' 🪙';
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>🧙 Profile</h1>
+    <p><strong>Username:</strong> <span id="username"></span></p>
+    <p><strong>Wallet Address:</strong> <span id="wallet"></span></p>
+    <p><strong>Balance:</strong> <span id="balance"></span></p>
+    <button onclick="logout()">Logout</button>
+  </div>
+</body>
+</html>

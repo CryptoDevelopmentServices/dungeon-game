@@ -5,40 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DungeonCoin - Earn Crypto While You Play</title>
   <link rel="stylesheet" href="style.css" />
-  <script defer src="auth.js"></script>
+
+  <script type="module">
+    import { getCurrentUser } from './auth.js';
+    const user = getCurrentUser();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const nav = document.getElementById('nav-links');
+      const userBox = document.getElementById('user-box');
+
+      if (user) {
+        nav.innerHTML = `
+          <a href="index.html">Home</a>
+          <a href="profile.html">Profile</a>
+        `;
+        userBox.innerText = `🧙 Logged in as ${user.username} — ${user.balance} 🪙`;
+      } else {
+        nav.innerHTML = `
+          <a href="login.html">Login</a>
+          <a href="register.html">Register</a>
+        `;
+      }
+    });
+  </script>
 </head>
 <body>
+  <div class="navbar" id="nav-links"></div>
   <div class="container">
     <h1>🪙 DungeonCoin</h1>
-    <p class="tagline">Play. Battle. Earn real crypto.</p>
+    <p class="tagline">Enter the dungeon. Conquer evil. Earn real crypto.</p>
+
+    <div id="user-box" class="user-info"></div>
 
     <div class="description">
       <p>
-        Welcome to <strong>DungeonCoin</strong> — a retro 8/16-bit style dungeon adventure game where you fight monsters, collect treasure, and earn real cryptocurrency for your progress.
+        <strong>DungeonCoin</strong> is a retro 8-bit and 16-bit inspired dungeon crawler that rewards you with cryptocurrency as you explore, battle, and collect loot.
       </p>
       <p>
-        Use your coins to upgrade weapons and armor, or withdraw them to your wallet. It's not just a game — it's a quest for real-world rewards.
+        Slay monsters in either <strong>Top-Down</strong> or <strong>Side-Scroller</strong> mode, earn DungeonCoin, and spend it on in-game upgrades — or withdraw to your wallet. 
+        It's a game that literally pays to play.
       </p>
-    </div>
-
-    <div class="auth-box">
-      <div class="form">
-        <h2>Login</h2>
-        <input type="text" id="login-username" placeholder="Username" />
-        <input type="password" id="login-password" placeholder="Password" />
-        <button onclick="login()">Login</button>
-      </div>
-
-      <div class="form">
-        <h2>Register</h2>
-        <input type="text" id="register-username" placeholder="Username" />
-        <input type="password" id="register-password" placeholder="Password" />
-        <button onclick="register()">Register</button>
-      </div>
+      <p>
+        Join our economy, upgrade your gear, rise through the ranks, and earn while having fun.
+      </p>
     </div>
 
     <p class="mode-links">
-      Want to dive in? <a href="index.html?mode=topdown">Top-down mode</a> | <a href="index.html?mode=sidescroller">Side-scroller mode</a>
+      Choose your style: 
+      <a href="index.html?mode=topdown">Top-down mode</a> | 
+      <a href="index.html?mode=sidescroller">Side-scroller mode</a>
     </p>
   </div>
 </body>

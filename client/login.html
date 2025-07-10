@@ -1,0 +1,53 @@
+<!-- client/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | DungeonCoin</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="module">
+    import { getCurrentUser } from './auth.js';
+    const user = getCurrentUser();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const nav = document.getElementById('nav-links');
+      const userBox = document.getElementById('user-box');
+
+      if (user) {
+        nav.innerHTML = `
+          <a href="index.html">Home</a>
+          <a href="profile.html">Profile</a>
+        `;
+        userBox.innerText = `🧙 Logged in as ${user.username} — ${user.balance} 🪙`;
+      } else {
+        nav.innerHTML = `
+          <a href="index.html">Home</a>
+          <a href="register.html">Register</a>
+        `;
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div class="navbar" id="nav-links"></div>
+  <div class="container">
+    <h1>🔐 Login to DungeonCoin</h1>
+
+    <label for="login-username">Username:</label>
+    <input type="text" id="login-username" placeholder="Enter your username" />
+
+    <label for="login-password">Password:</label>
+    <input type="password" id="login-password" placeholder="Enter your password" />
+    <div id="message" class="message"></div>
+
+    <button onclick="login()">Login</button>
+    <p>Don't have an account? <a href="register.html">Register</a></p>
+  </div>
+
+  <script type="module">
+    import { login } from './auth.js';
+    window.login = login; // Make it available for button
+  </script>
+</body>
+</html>

@@ -1,6 +1,16 @@
-async function login() {
+export function getCurrentUser() {
+  return JSON.parse(localStorage.getItem('user'));
+}
+
+export function logout() {
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
+}
+
+export async function login() {
   const username = document.getElementById('login-username').value;
   const password = document.getElementById('login-password').value;
+  const messageBox = document.getElementById('message');
 
   const res = await fetch('/api/auth/login', {
     method: 'POST',
@@ -10,17 +20,18 @@ async function login() {
 
   const data = await res.json();
   if (data.success) {
-    alert('Logged in!');
     localStorage.setItem('user', JSON.stringify(data.user));
-    window.location.href = 'index.html?mode=topdown'; // or sidescroller
+    window.location.href = 'index.html?mode=topdown';
   } else {
-    alert(data.error || 'Login failed');
+    messageBox.textContent = data.error || 'Login failed';
+    messageBox.classList.add('error');
   }
 }
 
-async function register() {
+export async function register() {
   const username = document.getElementById('register-username').value;
   const password = document.getElementById('register-password').value;
+  const messageBox = document.getElementById('message');
 
   const res = await fetch('/api/auth/register', {
     method: 'POST',
@@ -30,8 +41,14 @@ async function register() {
 
   const data = await res.json();
   if (data.success) {
-    alert('Account created!');
+    messageBox.textContent = '🎉 Account created! You can now log in.';
+    messageBox.classList.remove('error');
+    messageBox.classList.add('success');
   } else {
-    alert(data.error || 'Registration failed');
+    messageBox.textContent = data.error || 'Registration failed';
+    messageBox.classList.add('error');
   }
 }
+
+window.login = login;
+window.register = register;
