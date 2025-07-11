@@ -1,4 +1,4 @@
-import { Player } from '../entities/player';
+import { Player } from '../entities/player.js';
 
 export class TopDownScene extends Phaser.Scene {
   constructor() {

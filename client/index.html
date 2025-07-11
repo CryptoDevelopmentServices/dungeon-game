@@ -28,7 +28,52 @@
         `;
     }
 </script>
+<script type="module">
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode');
+
+  if (mode === 'topdown') {
+    import('./modes/topdown.js').then(module => {
+      const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        parent: 'phaser-container',
+        physics: {
+          default: 'arcade',
+          arcade: {
+            gravity: { y: 0 },
+            debug: false
+          }
+        },
+        scene: module.TopDownScene
+      };
+      new Phaser.Game(config);
+    });
+  } else if (mode === 'sidescroller') {
+    import('./modes/sidescroller.js').then(module => {
+      const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        parent: 'phaser-container',
+        physics: {
+          default: 'arcade',
+          arcade: {
+            gravity: { y: 500 },
+            debug: false
+          }
+        },
+        scene: module.SideScrollerScene
+      };
+      new Phaser.Game(config);
+    });
+  }
+</script>
+
 </head>
+<div id="phaser-container"></div>
+
 <body>
   <div class="navbar" id="nav-links"></div>
   <div class="container">
@@ -52,8 +97,8 @@
 
     <p class="mode-links">
       Choose your style: 
-      <a href="index.html?mode=topdown">Top-down mode</a> | 
-      <a href="index.html?mode=sidescroller">Side-scroller mode</a>
+      <a href="play.html?mode=topdown">Top-down mode</a> | 
+      <a href="play.html?mode=sidescroller">Side-scroller mode</a>
     </p>
   </div>
 </body>
