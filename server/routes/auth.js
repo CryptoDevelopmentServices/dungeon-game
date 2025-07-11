@@ -1,11 +1,13 @@
 import express from 'express';
 import User from "../models/User.js";
 import methods from "../daemon/methods.js";
+import validate from "../middlewares/validationMiddleware.js";
+import { userSchema } from "./schemas/authSchema.js";
 
 const router = express.Router();
 
 // Register Route
-router.post('/register', async (req, res) => {
+router.post('/register', validate(userSchema), async (req, res) => {
   const { username, password } = req.body;
 
   try {
@@ -34,7 +36,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login Route
-router.post('/login', async (req, res) => {
+router.post('/login', validate(userSchema), async (req, res) => {
   const { username, password } = req.body;
 
   try {

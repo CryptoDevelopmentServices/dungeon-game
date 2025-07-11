@@ -18,6 +18,7 @@
       document.getElementById('username').textContent = user.username;
       document.getElementById('wallet').textContent = user.wallet_address;
       document.getElementById('balance').textContent = user.balance + ' 🪙';
+      document.getElementById("logoutButton").onclick = () => logout()
     }
   </script>
 </head>
@@ -27,7 +28,7 @@
     <p><strong>Username:</strong> <span id="username"></span></p>
     <p><strong>Wallet Address:</strong> <span id="wallet"></span></p>
     <p><strong>Balance:</strong> <span id="balance"></span></p>
-    <button onclick="logout()">Logout</button>
+    <button id="logoutButton">Logout</button>
   </div>
 </body>
 </html>
