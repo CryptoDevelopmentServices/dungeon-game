@@ -3,11 +3,13 @@ import User from "../models/User.js";
 import methods from "../daemon/methods.js";
 import { rewardSchema } from "./schemas/gameSchema.js";
 import validate from "../middlewares/validationMiddleware.js";
+import authenticate from "../middlewares/jwtMiddleware.js";
 
 const router = express.Router();
 
-router.put('/reward', validate(rewardSchema), async (req, res) => {
-    const { username, amount } = req.body;
+router.put('/reward', authenticate, validate(rewardSchema), async (req, res) => {
+    const username = req.user.username;
+    const amount = req.body.amount;
 
     try {
         // try update balance on daemon side first
@@ -33,11 +35,12 @@ router.put('/reward', validate(rewardSchema), async (req, res) => {
     }
 });
 
-router.get('/profile/:username', async (req, res) => {
+router.get('/profile', authenticate, async (req, res) => {
+  const username = req.user.username;
   const user = await User.findOne(
       {
         where: {
-          username: req.params.username
+          username: username
         }
       }
   );
