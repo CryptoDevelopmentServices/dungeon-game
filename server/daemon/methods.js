@@ -55,6 +55,18 @@ const methods = {
         }
 
         return response.result;
+    },
+    getTransactions: async (username = "", count = 0, skip = 0) => {
+        const response = await client.make_request(
+            "listtransactions",
+            [username, count, skip]
+        );
+
+        if (response.error) {
+            throw new Error(response.error);
+        }
+
+        return response.result;
     }
 }
 

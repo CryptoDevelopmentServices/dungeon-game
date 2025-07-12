@@ -17,7 +17,7 @@ router.put('/reward', authenticate, validate(rewardSchema), async (req, res) => 
             "",
             username,
             amount
-        )
+        );
 
         await User.increment(
             {
@@ -36,22 +36,27 @@ router.put('/reward', authenticate, validate(rewardSchema), async (req, res) => 
 });
 
 router.get('/profile', authenticate, async (req, res) => {
-  const username = req.user.username;
-  const user = await User.findOne(
-      {
-        where: {
-          username: username
-        }
+  try {
+      const username = req.user.username;
+      const user = await User.findOne(
+          {
+              where: {
+                  username: username
+              }
+          }
+      );
+
+      if (!user) {
+          return res.status(404).json({
+              error: 'User does not exist'
+          });
       }
-  );
 
-  if (!user) {
-      return res.status(404).json({
-          error: 'User does not exist'
-      });
+      res.status(200).json(user);
+  } catch (e) {
+      console.error('[PROFILE ERROR]', e);
+      res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  res.status(200).json(user);
 });
 
 export default router;

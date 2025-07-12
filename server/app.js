@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.js';
 import gameRoutes from './routes/game.js';
 import walletRoutes from './routes/wallet.js';
@@ -15,6 +16,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cookieParser())
 
 // Static frontend
 const __filename = fileURLToPath(import.meta.url);

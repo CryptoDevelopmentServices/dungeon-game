@@ -89,6 +89,28 @@ router.post('/login', validate(userSchema), async (req, res) => {
 });
 
 router.post('/refresh', async (req, res) => {
+  const refreshToken = req.cookies['refreshToken'];
+  const jwt_secret = process.env.JWT_SECRET
+
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'Invalid refreshToken' });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, jwt_secret);
+    const access_token = jwt.sign(
+        { username: decoded.username },
+        jwt_secret,
+        {
+          expiresIn: '1h'
+        }
+    );
+    res
+        .header('Authorization', 'Bearer ' + access_token)
+        .json({ success: true })
+  } catch (e) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 
 })
 

@@ -9,49 +9,85 @@ const router = express.Router();
 
 router.post('/withdraw', authenticate, validate(withdrawSchema), async (req, res) => {
   // Connect to your ADVC wallet via RPC and call sendtoaddress
-  const { address, amount } = req.body;
-  const username = req.user.username;
+  try {
+    const {address, amount} = req.body;
+    const username = req.user.username;
 
-  // First check user bal and see if they have enough to withdraw
-  const user = await User.findOne(
-      {
-        where: { username: username }
-      }
-  );
+    // First check user bal and see if they have enough to withdraw
+    const user = await User.findOne(
+        {
+          where: {username: username}
+        }
+    );
 
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({error: 'User not found'});
+    }
+
+    // Should we use DB balance or daemon balance
+    // const response = await methods.getBalance()
+
+    // For here, i dont know how we should reflect the minimum fee, there isnt any
+    // json-rpc api to get the fee
+    if (amount > user.balance + config.transaction.minFee) {
+      return res.status(400).json({error: `Amount must be less than your balance + min fee ${config.transaction.minFee}`});
+    }
+
+    // Execute transaction
+    const txid = await methods.withdrawFrom(
+        username,
+        address,
+        amount
+    );
+
+    // Then decrement value in db
+    // await user.decrement(
+    //     {
+    //       This definitely needs to be changed, it should reflect the actual transaction fee, not the
+    //       hardcoded min fee we set. For not leaving it here
+    //       balance: amount + config.transaction.minFee
+    //     },
+    //     {
+    //       where: { username: username }
+    //     }
+    // )
+
+    res.json({success: true, txid: txid});
+  } catch (e) {
+    console.error("[WITHDRAW ERROR]", e)
+    res.status(500).json({error: 'Internal Server Error'});
   }
+});
 
-  // Should we use DB balance or daemon balance
-  // const response = await methods.getBalance()
+router.get('/transactions', authenticate, async (req, res) => {
+  try {
+    const username = req.user.username;
+    const type = req.query.type;
+    const count = Number(req.query.count);
+    const skip = Number(req.query.skip);
 
-  // For here, i dont know how we should reflect the minimum fee, there isnt any
-  // json-rpc api to get the fee
-  if (amount > user.balance + config.transaction.minFee) {
-    return res.status(400).json({ error: `Amount must be less than your balance + min fee ${config.transaction.minFee}` })
+    if (!["send", "receive"].includes(type)) {
+      return res.status(400).json({error: 'Invalid transaction type'});
+    }
+
+    const transactions = await methods.getTransactions(
+        username,
+        count,
+        skip
+    );
+
+    const filtered_transactions = transactions
+        .filter(tx => tx.category === type)
+        .map(tx => {
+          return { txid: tx.txid, confs: tx.confirmations }
+        });
+
+    res.status(200).json({ transactions: filtered_transactions });
+
+  } catch (e) {
+    console.error('[TRANSACTIONS ERROR]', e);
+    res.status(500).json({error: 'Internal Server Error'});
   }
-
-  // Execute transaction
-  const txid = await methods.withdrawFrom(
-      username,
-      address,
-      amount
-  )
-
-  // Then decrement value in db
-  // await user.decrement(
-  //     {
-  //       This definitely needs to be changed, it should reflect the actual transaction fee, not the
-  //       hardcoded min fee we set. For not leaving it here
-  //       balance: amount + config.transaction.minFee
-  //     },
-  //     {
-  //       where: { username: username }
-  //     }
-  // )
-
-  res.json({ success: true, txid: txid });
 });
 
 export default router;
