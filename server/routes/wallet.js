@@ -4,11 +4,13 @@ import { config } from '../daemon_conf.js';
 import methods from "../daemon/methods.js";
 import { withdrawSchema } from "./schemas/walletSchema.js";
 import validate from "../middlewares/validationMiddleware.js";
+import authenticate from "../middlewares/jwtMiddleware.js";
 const router = express.Router();
 
-router.post('/withdraw', validate(withdrawSchema), async (req, res) => {
+router.post('/withdraw', authenticate, validate(withdrawSchema), async (req, res) => {
   // Connect to your ADVC wallet via RPC and call sendtoaddress
-  const { username, address, amount } = req.body;
+  const { address, amount } = req.body;
+  const username = req.user.username;
 
   // First check user bal and see if they have enough to withdraw
   const user = await User.findOne(

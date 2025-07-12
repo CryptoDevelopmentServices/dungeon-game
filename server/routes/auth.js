@@ -3,8 +3,9 @@ import User from "../models/User.js";
 import methods from "../daemon/methods.js";
 import validate from "../middlewares/validationMiddleware.js";
 import { userSchema } from "./schemas/authSchema.js";
-
+import pkg from 'jsonwebtoken';
 const router = express.Router();
+const jwt = pkg;
 
 // Register Route
 router.post('/register', validate(userSchema), async (req, res) => {
@@ -48,19 +49,47 @@ router.post('/login', validate(userSchema), async (req, res) => {
       return res.status(401).json({ error: 'Invalid login' });
     }
 
+    // Create JWT with secret
+    const jwt_secret = process.env.JWT_SECRET
+    const access_token = jwt.sign(
+        { username },
+        jwt_secret,
+        {
+          expiresIn: '1h'
+        }
+    );
+
+    const refresh_token = jwt.sign(
+        { username },
+        jwt_secret,
+        {
+          expiresIn: '1d'
+        }
+    );
+
     // ✅ Return only safe fields
-    res.json({
-      success: true,
-      user: {
-        username: user.username,
-        wallet_address: user.wallet_address,
-        balance: user.balance
-      }
-    });
+    res
+        .cookie(
+        'refreshToken', refresh_token, { httpOnly: true, sameSite: 'strict' }
+        )
+        .header('Authorization', 'Bearer ' + access_token)
+        .json({
+          success: true,
+          user: {
+            username: user.username,
+            wallet_address: user.wallet_address,
+            balance: user.balance
+          }
+        }
+      )
   } catch (e) {
     console.error('[LOGIN ERROR]', e);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.post('/refresh', async (req, res) => {
+
+})
 
 export default router;

@@ -3,11 +3,12 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
-
 import authRoutes from './routes/auth.js';
 import gameRoutes from './routes/game.js';
 import walletRoutes from './routes/wallet.js';
 import { init } from './db/sql.js'; // ✅ Best to use named import
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 
