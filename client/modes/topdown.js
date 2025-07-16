@@ -19,6 +19,7 @@ export class TopDownScene extends Phaser.Scene {
 
     this.levelData = this.generateDungeon(mapWidth, mapHeight);
 
+    // === CREATE TILEMAP ===
     const map = this.make.tilemap({
       data: this.levelData,
       tileWidth: tileSize,
@@ -28,31 +29,46 @@ export class TopDownScene extends Phaser.Scene {
     const tileset = map.addTilesetImage('tiles', null, tileSize, tileSize, 0, 0);
     const layer = map.createLayer(0, tileset, 0, 0);
 
-    layer.setCollision(0); // Only tile 0 is wall
+    // === COLLISION FIX ===
+    // Clear all collisions first
+    layer.setCollisionBetween(0, 3, false);
+    // Set only tile index 0 (top-left dark tile) as colliding (wall)
+    layer.setCollision(0);
 
-    // === Spawn player ===
+    // Optional: visualize debug collisions
+    // const debugGraphics = this.add.graphics().setAlpha(0.3);
+    // layer.renderDebug(debugGraphics, {
+    //   tileColor: null,
+    //   collidingTileColor: new Phaser.Display.Color(255, 0, 0, 255),
+    //   faceColor: new Phaser.Display.Color(0, 255, 0, 255)
+    // });
+
+    // === PLAYER ===
     const spawn = this.findSpawnPoint();
     this.player = new Player(this, spawn.x * tileSize + tileSize / 2, spawn.y * tileSize + tileSize / 2);
+    this.player.sprite.setSize(16, 16);             // Hitbox fix
+    this.player.sprite.setOffset(8, 8);             // Centered in 32x32 tile
     this.physics.add.collider(this.player.sprite, layer);
 
-    // === Camera Follow ===
+    // === CAMERA ===
     this.cameras.main.setBounds(0, 0, mapWidth * tileSize, mapHeight * tileSize);
     this.cameras.main.startFollow(this.player.sprite);
 
-    // === Spawn coins ===
-    this.coins = this.physics.add.group();
+    // === COINS ===
+    this.coins = this.add.group(); // non-physics group (no collision)
     for (let i = 0; i < 5; i++) {
       const pos = this.getRandomFloorTile(this.levelData);
       const coin = this.coins.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'coin');
       coin.setScale(0.8);
     }
 
-    // === Spawn enemies ===
+    // === ENEMIES ===
     this.enemies = this.physics.add.group();
     for (let i = 0; i < 3; i++) {
       const pos = this.getRandomFloorTile(this.levelData);
       const enemy = this.enemies.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'enemy');
       enemy.setCollideWorldBounds(true);
+      enemy.body.checkCollision.none = true; // temporarily disable enemy collision
     }
   }
 
@@ -61,7 +77,7 @@ export class TopDownScene extends Phaser.Scene {
   }
 
   generateDungeon(width, height) {
-    const map = Array.from({ length: height }, () => Array(width).fill(0));
+    const map = Array.from({ length: height }, () => Array(width).fill(0)); // Start with walls
 
     const rooms = [];
     const roomCount = 8;
@@ -94,13 +110,14 @@ export class TopDownScene extends Phaser.Scene {
         continue;
       }
 
-      // Carve room
+      // Carve floor using random tile index (1, 2, or 3)
       for (let y = roomY; y < roomY + roomH; y++) {
         for (let x = roomX; x < roomX + roomW; x++) {
-          map[y][x] = Phaser.Math.RND.pick([1, 2, 3]);
+          this.setFloor(map, x, y);
         }
       }
 
+      // Connect to previous room
       if (rooms.length > 0) {
         const prev = rooms[Phaser.Math.Between(0, rooms.length - 1)];
         const x1 = Math.floor(prev.x + prev.w / 2);
@@ -125,10 +142,9 @@ export class TopDownScene extends Phaser.Scene {
     return map;
   }
 
-  // Safely mark tiles as walkable floor (1)
   setFloor(map, x, y) {
     if (map[y] && map[y][x] !== undefined) {
-      map[y][x] = 1;
+      map[y][x] = Phaser.Math.RND.pick([1, 2, 3]); // Random floor tile
     }
   }
 
@@ -154,11 +170,9 @@ export class TopDownScene extends Phaser.Scene {
     const room = this.spawnRoom;
     const centerX = Math.floor(room.x + room.w / 2);
     const centerY = Math.floor(room.y + room.h / 2);
-
-    if (this.levelData[centerY][centerX] >= 1 && this.levelData[centerY][centerX] <= 3) {
+    if (this.levelData[centerY][centerX] !== 0) {
       return { x: centerX, y: centerY };
     }
-
     return this.getRandomFloorTile(this.levelData);
   }
 
@@ -166,7 +180,7 @@ export class TopDownScene extends Phaser.Scene {
     const valid = [];
     for (let y = 0; y < map.length; y++) {
       for (let x = 0; x < map[y].length; x++) {
-        if (map[y][x] >= 1 && map[y][x] <= 3) valid.push({ x, y });
+        if (map[y][x] !== 0) valid.push({ x, y });
       }
     }
     return Phaser.Utils.Array.GetRandom(valid);
