@@ -17,18 +17,24 @@ export class TopDownScene extends Phaser.Scene {
     const mapWidth = 40;
     const mapHeight = 40;
 
-    const levelData = this.generateDungeon(mapWidth, mapHeight);
-    const map = this.make.tilemap({ data: levelData, tileWidth: tileSize, tileHeight: tileSize });
+    this.levelData = this.generateDungeon(mapWidth, mapHeight);
+
+    const map = this.make.tilemap({
+      data: this.levelData,
+      tileWidth: tileSize,
+      tileHeight: tileSize
+    });
+
     const tileset = map.addTilesetImage('tiles', null, tileSize, tileSize, 0, 0);
     const layer = map.createLayer(0, tileset, 0, 0);
 
-    layer.setCollisionBetween(0, 0); // Only tile 0 = wall is solid
+    layer.setCollision(0); // Only tile 0 is wall
 
     // === Spawn player ===
     const spawn = this.findSpawnPoint();
     this.player = new Player(this, spawn.x * tileSize + tileSize / 2, spawn.y * tileSize + tileSize / 2);
     this.physics.add.collider(this.player.sprite, layer);
-    
+
     // === Camera Follow ===
     this.cameras.main.setBounds(0, 0, mapWidth * tileSize, mapHeight * tileSize);
     this.cameras.main.startFollow(this.player.sprite);
@@ -36,7 +42,7 @@ export class TopDownScene extends Phaser.Scene {
     // === Spawn coins ===
     this.coins = this.physics.add.group();
     for (let i = 0; i < 5; i++) {
-      const pos = this.getRandomFloorTile(levelData);
+      const pos = this.getRandomFloorTile(this.levelData);
       const coin = this.coins.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'coin');
       coin.setScale(0.8);
     }
@@ -44,7 +50,7 @@ export class TopDownScene extends Phaser.Scene {
     // === Spawn enemies ===
     this.enemies = this.physics.add.group();
     for (let i = 0; i < 3; i++) {
-      const pos = this.getRandomFloorTile(levelData);
+      const pos = this.getRandomFloorTile(this.levelData);
       const enemy = this.enemies.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'enemy');
       enemy.setCollideWorldBounds(true);
     }
@@ -119,24 +125,27 @@ export class TopDownScene extends Phaser.Scene {
     return map;
   }
 
-  createHallway(map, x1, y1, x2, y2) {
-    const floorTile = 1;
+  // Safely mark tiles as walkable floor (1)
+  setFloor(map, x, y) {
+    if (map[y] && map[y][x] !== undefined) {
+      map[y][x] = 1;
+    }
+  }
 
+  createHallway(map, x1, y1, x2, y2) {
     if (x1 === x2) {
-      // Vertical
       const minY = Math.min(y1, y2);
       const maxY = Math.max(y1, y2);
       for (let y = minY; y <= maxY; y++) {
-        map[y][x1] = floorTile;
-        if (x1 + 1 < map[0].length) map[y][x1 + 1] = floorTile;
+        this.setFloor(map, x1, y);
+        this.setFloor(map, x1 + 1, y);
       }
     } else if (y1 === y2) {
-      // Horizontal
       const minX = Math.min(x1, x2);
       const maxX = Math.max(x1, x2);
       for (let x = minX; x <= maxX; x++) {
-        map[y1][x] = floorTile;
-        if (y1 + 1 < map.length) map[y1 + 1][x] = floorTile;
+        this.setFloor(map, x, y1);
+        this.setFloor(map, x, y1 + 1);
       }
     }
   }
@@ -145,7 +154,12 @@ export class TopDownScene extends Phaser.Scene {
     const room = this.spawnRoom;
     const centerX = Math.floor(room.x + room.w / 2);
     const centerY = Math.floor(room.y + room.h / 2);
-    return { x: centerX, y: centerY };
+
+    if (this.levelData[centerY][centerX] >= 1 && this.levelData[centerY][centerX] <= 3) {
+      return { x: centerX, y: centerY };
+    }
+
+    return this.getRandomFloorTile(this.levelData);
   }
 
   getRandomFloorTile(map) {
