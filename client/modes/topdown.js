@@ -28,6 +28,10 @@ export class TopDownScene extends Phaser.Scene {
     const spawn = this.findSpawnPoint();
     this.player = new Player(this, spawn.x * tileSize + tileSize / 2, spawn.y * tileSize + tileSize / 2);
     this.physics.add.collider(this.player.sprite, layer);
+    
+    // === Camera Follow ===
+    this.cameras.main.setBounds(0, 0, mapWidth * tileSize, mapHeight * tileSize);
+    this.cameras.main.startFollow(this.player.sprite);
 
     // === Spawn coins ===
     this.coins = this.physics.add.group();
