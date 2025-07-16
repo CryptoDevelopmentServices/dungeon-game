@@ -19,56 +19,42 @@ export class TopDownScene extends Phaser.Scene {
 
     this.levelData = this.generateDungeon(mapWidth, mapHeight);
 
-    // === CREATE TILEMAP ===
     const map = this.make.tilemap({
-      data: this.levelData,
-      tileWidth: tileSize,
-      tileHeight: tileSize
+        data: this.levelData,
+        tileWidth: tileSize,
+        tileHeight: tileSize
     });
 
     const tileset = map.addTilesetImage('tiles', null, tileSize, tileSize, 0, 0);
     const layer = map.createLayer(0, tileset, 0, 0);
 
-    // === COLLISION FIX ===
-    // Clear all collisions first
-    layer.setCollisionBetween(0, 3, false);
-    // Set only tile index 0 (top-left dark tile) as colliding (wall)
-    layer.setCollision(0);
+    // ✅ Only enable collision on tile index 0 (dark brick wall)
+    layer.setCollisionByExclusion([1, 2, 3]);
 
-    // Optional: visualize debug collisions
-    // const debugGraphics = this.add.graphics().setAlpha(0.3);
-    // layer.renderDebug(debugGraphics, {
-    //   tileColor: null,
-    //   collidingTileColor: new Phaser.Display.Color(255, 0, 0, 255),
-    //   faceColor: new Phaser.Display.Color(0, 255, 0, 255)
-    // });
-
-    // === PLAYER ===
+    // === Spawn player ===
     const spawn = this.findSpawnPoint();
     this.player = new Player(this, spawn.x * tileSize + tileSize / 2, spawn.y * tileSize + tileSize / 2);
-    this.player.sprite.setSize(16, 16);             // Hitbox fix
-    this.player.sprite.setOffset(8, 8);             // Centered in 32x32 tile
     this.physics.add.collider(this.player.sprite, layer);
 
-    // === CAMERA ===
+    // === Camera Follow ===
     this.cameras.main.setBounds(0, 0, mapWidth * tileSize, mapHeight * tileSize);
     this.cameras.main.startFollow(this.player.sprite);
 
-    // === COINS ===
-    this.coins = this.add.group(); // non-physics group (no collision)
+    // === Spawn coins ===
+    this.coins = this.physics.add.group();
     for (let i = 0; i < 5; i++) {
-      const pos = this.getRandomFloorTile(this.levelData);
-      const coin = this.coins.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'coin');
-      coin.setScale(0.8);
+        const pos = this.getRandomFloorTile(this.levelData);
+        const coin = this.coins.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'coin');
+        coin.setScale(0.8);
     }
 
-    // === ENEMIES ===
+    // === Spawn enemies ===
     this.enemies = this.physics.add.group();
     for (let i = 0; i < 3; i++) {
-      const pos = this.getRandomFloorTile(this.levelData);
-      const enemy = this.enemies.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'enemy');
-      enemy.setCollideWorldBounds(true);
-      enemy.body.checkCollision.none = true; // temporarily disable enemy collision
+        const pos = this.getRandomFloorTile(this.levelData);
+        const enemy = this.enemies.create(pos.x * tileSize + tileSize / 2, pos.y * tileSize + tileSize / 2, 'enemy');
+        enemy.setCollideWorldBounds(true);
+        this.physics.add.collider(enemy, layer);
     }
   }
 
@@ -110,7 +96,7 @@ export class TopDownScene extends Phaser.Scene {
         continue;
       }
 
-      // Carve floor using random tile index (1, 2, or 3)
+      // Carve floor using random floor tile index (1, 2, 3)
       for (let y = roomY; y < roomY + roomH; y++) {
         for (let x = roomX; x < roomX + roomW; x++) {
           this.setFloor(map, x, y);
@@ -144,7 +130,7 @@ export class TopDownScene extends Phaser.Scene {
 
   setFloor(map, x, y) {
     if (map[y] && map[y][x] !== undefined) {
-      map[y][x] = Phaser.Math.RND.pick([1, 2, 3]); // Random floor tile
+      map[y][x] = Phaser.Math.RND.pick([1, 2, 3]);
     }
   }
 
