@@ -1,2 +1,6 @@
 backend/.env
 backend/node_modules
+backend/package-lock.json
+frontend/assets/*backup.png
+tiles-scripts/package-lock.json
+tiles-scripts/node_modules

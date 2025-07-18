@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ADVC Crypto Game</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; overflow: hidden; background: #111;
+      font-family: Arial, sans-serif;
+      color: white;
+      user-select: none;
+    }
+    #hud {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+      z-index: 1000;
+    }
+    #logout-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      padding: 8px 12px;
+      background: #d33;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">Balance: <span id="balance">0</span> ADVC</div>
+  <button id="logout-btn">Logout</button>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+  <script src="main.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ADVC Game Register</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 50px auto;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    .error {
+      color: red;
+    }
+    a {
+      cursor: pointer;
+      color: blue;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Create an Account</h1>
+
+  <div id="register-form">
+    <input type="text" id="username" placeholder="Username" autocomplete="username" />
+    <input type="password" id="password" placeholder="Password" autocomplete="new-password" />
+    <input type="text" id="wallet" placeholder="ADVC Wallet Address (optional)" autocomplete="off" />
+    <button id="register-btn">Register</button>
+    <p>Already have an account? <a id="go-login">Login here</a></p>
+    <p id="error-msg" class="error"></p>
+  </div>
+
+  <script src="main.js"></script>
+  <script>
+    const registerBtn = document.getElementById('register-btn');
+    const errorMsg = document.getElementById('error-msg');
+    const goLogin = document.getElementById('go-login');
+
+    registerBtn.addEventListener('click', async () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const walletAddress = document.getElementById('wallet').value.trim();
+      errorMsg.textContent = '';
+
+      if (!username || !password) {
+        errorMsg.textContent = 'Please fill in username and password';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, walletAddress }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorMsg.textContent = data.message || 'Registration failed';
+          return;
+        }
+
+        alert('Registration successful! Please login.');
+        window.location.href = 'index.html';
+      } catch (e) {
+        errorMsg.textContent = 'Server error, try again later';
+      }
+    });
+
+    goLogin.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

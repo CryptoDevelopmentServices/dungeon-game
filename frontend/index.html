@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ADVC Game Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 50px auto;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    .error {
+      color: red;
+    }
+    a {
+      cursor: pointer;
+      color: blue;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>ADVC Crypto Game Login</h1>
+
+  <div id="login-form">
+    <input type="text" id="username" placeholder="Username" autocomplete="username" />
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+    <button id="login-btn">Login</button>
+    <p>Don't have an account? <a id="go-register">Register here</a></p>
+    <p id="error-msg" class="error"></p>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
