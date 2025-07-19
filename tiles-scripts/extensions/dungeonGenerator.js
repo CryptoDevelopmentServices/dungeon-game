@@ -76,8 +76,9 @@ function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 
     const collisionLayer = getOrCreateObjectLayer(map, "Collisions");
     const enemyLayer = getOrCreateObjectLayer(map, "Enemies");
     const triggerLayer = getOrCreateObjectLayer(map, "Triggers");
+    const lightLayer = getOrCreateObjectLayer(map, "Lights");
 
-    for (const layer of [lootLayer, collisionLayer, enemyLayer, triggerLayer]) {
+    for (const layer of [lootLayer, collisionLayer, enemyLayer, triggerLayer, lightLayer]) {
         clearObjectLayer(layer);
     }
 
@@ -212,7 +213,7 @@ function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 
         const rw = room.w - 2;
         const rh = room.h - 2;
 
-        // Always place spike traps randomly (1–2 per room)
+        // Place spike traps
         const spikeTraps = 1 + Math.floor(Math.random() * 2);
         for (let i = 0; i < spikeTraps; i++) {
             const tx = rx + Math.floor(Math.random() * rw);
@@ -229,49 +230,81 @@ function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 
             triggerLayer.addObject(spikeTrigger);
         }
 
-        // Place random torch lights (1–3 per room)
-        const torches = 1 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < torches; i++) {
-            const lx = rx + Math.floor(Math.random() * rw);
-            const ly = ry + Math.floor(Math.random() * rh);
-            layerEdit.setTile(lx, ly, decoTileset.tile(TILE_TORCH));
-        }
-
-        // Torch on wall
-        const torchWall = room.x + Math.floor(room.w / 2);
-        const torchY = room.y - 1;
-        if (torchY >= 0 && tileLayer.cellAt(torchWall, torchY)?.tile?.id === TILE_WALL) {
-            layerEdit.setTile(torchWall, torchY, decoTileset.tile(TILE_TORCH));
-        }
-
-        // Mimic chest
-        if (Math.random() < 0.05) {
-            const mx = rx + Math.floor(Math.random() * rw);
-            const my = ry + Math.floor(Math.random() * rh);
-            layerEdit.setTile(mx, my, decoTileset.tile(TILE_MIMIC));
-
-            const spawnCount = 1 + Math.floor(Math.random() * 2);
-            for (let i = 0; i < spawnCount; i++) {
-                const dx = mx + Math.floor(Math.random() * 3) - 1;
-                const dy = my + Math.floor(Math.random() * 3) - 1;
-                if (dx >= 0 && dx < map.width && dy >= 0 && dy < map.height) {
-                    const enemy = new MapObject();
-                    enemy.name = "enemy";
-                    enemy.type = "enemy";
-                    enemy.gid = 1;
-                    enemy.x = dx * map.tileWidth;
-                    enemy.y = dy * map.tileHeight;
-                    enemy.width = map.tileWidth;
-                    enemy.height = map.tileHeight;
-                    enemyLayer.addObject(enemy);
+        // Random decor (slime, broken, hole, smooth)
+        const decorTiles = [
+            { id: TILE_SLIME, chance: 0.07 },
+            { id: TILE_BROKEN, chance: 0.05 },
+            { id: TILE_HOLE, chance: 0.04 },
+            { id: TILE_SMOOTH, chance: 0.05 }
+        ];
+        for (let dy = ry; dy < ry + rh; dy++) {
+            for (let dx = rx; dx < rx + rw; dx++) {
+                const rand = Math.random();
+                for (const deco of decorTiles) {
+                    if (rand < deco.chance) {
+                        layerEdit.setTile(dx, dy, decoTileset.tile(deco.id));
+                        break;
+                    }
                 }
             }
         }
 
-        // Stairs + trigger
+        // Torches near wall/floor
+        let torchesPlaced = 0;
+        const desiredTorchCount = 1 + Math.floor(Math.random() * 2);
+        for (let wx = room.x; wx < room.x + room.w; wx++) {
+            for (let wy = room.y; wy < room.y + room.h; wy++) {
+                if (torchesPlaced >= desiredTorchCount) break;
+                const wall = tileLayer.cellAt(wx, wy);
+                if (wall?.tile?.id === TILE_WALL) {
+                    const neighbors = [
+                        [wx + 1, wy], [wx - 1, wy], [wx, wy + 1], [wx, wy - 1]
+                    ];
+                    for (const [nx, ny] of neighbors) {
+                        const nTile = tileLayer.cellAt(nx, ny)?.tile;
+                        if (nTile && nTile.id !== TILE_WALL) {
+                            layerEdit.setTile(wx, wy, decoTileset.tile(TILE_TORCH));
+
+                            const light = new MapObject();
+                            light.name = "torch_light";
+                            light.type = "light";
+                            light.x = wx * map.tileWidth + map.tileWidth / 2;
+                            light.y = wy * map.tileHeight + map.tileHeight / 2;
+                            light.width = map.tileWidth;
+                            light.height = map.tileHeight;
+                            light.setProperty("radius", 100);
+                            light.setProperty("flicker", true);
+                            lightLayer.addObject(light);
+
+                            torchesPlaced++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Mimic disguised as chest (trigger object)
+        if (Math.random() < 0.08) {
+            const mx = rx + Math.floor(Math.random() * rw);
+            const my = ry + Math.floor(Math.random() * rh);
+            layerEdit.setTile(mx, my, decoTileset.tile(TILE_CHEST));
+
+            const mimicTrigger = new MapObject();
+            mimicTrigger.name = "mimic";
+            mimicTrigger.type = "trigger";
+            mimicTrigger.x = mx * map.tileWidth;
+            mimicTrigger.y = my * map.tileHeight;
+            mimicTrigger.width = map.tileWidth;
+            mimicTrigger.height = map.tileHeight;
+            mimicTrigger.setProperty("isMimic", true);
+            mimicTrigger.setProperty("enemyCount", 1 + Math.floor(Math.random() * 2));
+            triggerLayer.addObject(mimicTrigger);
+        }
+
+        // Place stairs (up/down)
         const sx = rx + Math.floor(Math.random() * rw);
         const sy = ry + Math.floor(Math.random() * rh);
-
         if (!stairsPlaced.up && Math.random() < 0.5) {
             layerEdit.setTile(sx, sy, decoTileset.tile(TILE_STAIRS));
             const up = new MapObject();
@@ -322,7 +355,6 @@ tiled.extendMenu("Map", [
 
 tiled.assetOpened.connect((asset) => {
     if (!(asset && asset.isTileMap)) return;
-
     const map = asset;
     const layer = map.layerAt(0);
     if (layer?.isTileLayer && layer.name === "Floor") {
@@ -331,7 +363,6 @@ tiled.assetOpened.connect((asset) => {
                 !layer.cellAt(x, y)?.tile
             )
         );
-
         if (isEmpty) {
             tiled.log("🧱 Generating dungeon because map is empty...");
             generateDungeon(map, layer);
