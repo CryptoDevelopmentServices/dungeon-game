@@ -2,5 +2,6 @@ backend/.env
 backend/node_modules
 backend/package-lock.json
 frontend/assets/*backup.png
-tiles-scripts/package-lock.json
-tiles-scripts/node_modules
+tiles-scripts/dungeon-game-advc.tiled-session
+tiles-scripts/extensions/package-lock.json
+tiles-scripts/extensions/node_modules

@@ -4,32 +4,39 @@ const TILE_WALL = 0;
 const TILE_MOSSY = 1;
 const TILE_FLOOR = 2;
 const TILE_CRACKED = 3;
-// Remove TILE_ENEMY since enemies are objects now
 
-function placeFloorWithLogic(layer, x, y, map, isCorridor = false) {
+let layerEdit = null;
+
+function placeFloorWithLogic(x, y, map, tileset, tileLayer, isCorridor = false) {
+    let tileToSet;
     if (isCorridor) {
-        layer.setTile(x, y, TILE_CRACKED);
+        tileToSet = tileset.tile(TILE_CRACKED);
+    } else {
+        let nearWall = false;
+        const offsets = [
+            [-1, 0], [1, 0], [0, -1], [0, 1],
+            [-1, -1], [1, -1], [-1, 1], [1, 1]
+        ];
+        for (const [dx, dy] of offsets) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx >= 0 && ny >= 0 && nx < map.width && ny < map.height) {
+                const tile = tileLayer.cellAt(nx, ny)?.tile;
+                if (tile && tile.id === TILE_WALL) {
+                    nearWall = true;
+                    break;
+                }
+            }
+        }
+        tileToSet = tileset.tile(nearWall ? TILE_MOSSY : TILE_FLOOR);
+    }
+
+    if (!tileToSet) {
+        tiled.alert(`Tile ID not found in tileset.`);
         return;
     }
 
-    let nearWall = false;
-    const offsets = [
-        [-1, 0], [1, 0], [0, -1], [0, 1],
-        [-1, -1], [1, -1], [-1, 1], [1, 1]
-    ];
-    for (const [dx, dy] of offsets) {
-        const nx = x + dx;
-        const ny = y + dy;
-        if (nx >= 0 && ny >= 0 && nx < map.width && ny < map.height) {
-            const tile = layer.tileAt(nx, ny);
-            if (tile && tile.id === TILE_WALL) {
-                nearWall = true;
-                break;
-            }
-        }
-    }
-
-    layer.setTile(x, y, nearWall ? TILE_MOSSY : TILE_FLOOR);
+    layerEdit.setTile(x, y, tileToSet);
 }
 
 function getOrCreateObjectLayer(map, name) {
@@ -44,21 +51,36 @@ function getOrCreateObjectLayer(map, name) {
     return newLayer;
 }
 
+function clearObjectLayer(layer) {
+    while (layer.objectCount > 0) {
+        layer.removeObject(layer.objectAt(0));
+    }
+}
+
 function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 10) {
     const width = map.width;
     const height = map.height;
+    const tileset = map.tilesets[0];
+    if (!tileset) {
+        tiled.alert("No tileset found in map!");
+        return;
+    }
+
+    layerEdit = tileLayer.edit();
 
     const lootLayer = getOrCreateObjectLayer(map, "Loot");
     const collisionLayer = getOrCreateObjectLayer(map, "Collisions");
-    const enemyLayer = getOrCreateObjectLayer(map, "Enemies"); // Object layer for enemies
+    const enemyLayer = getOrCreateObjectLayer(map, "Enemies");
 
-    // Fill map with walls & clear enemies
+    for (const layer of [lootLayer, collisionLayer, enemyLayer]) {
+        clearObjectLayer(layer);
+    }
+
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            tileLayer.setTile(x, y, TILE_WALL);
+            layerEdit.setTile(x, y, tileset.tile(TILE_WALL));
         }
     }
-    enemyLayer.clear(); // Remove all previous enemy objects
 
     const rooms = [];
 
@@ -66,7 +88,7 @@ function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 
         for (let ry = y; ry < y + h; ry++) {
             for (let rx = x; rx < x + w; rx++) {
                 if (rx >= 0 && ry >= 0 && rx < width && ry < height) {
-                    placeFloorWithLogic(tileLayer, rx, ry, map);
+                    placeFloorWithLogic(rx, ry, map, tileset, tileLayer);
                 }
             }
         }
@@ -76,15 +98,16 @@ function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 
             const lootY = y + Math.floor(Math.random() * h);
             const types = ["coin", "armor", "weapon"];
             const type = types[Math.floor(Math.random() * types.length)];
-            const obj = lootLayer.addObject({
-                name: type,
-                type: "loot",
-                x: lootX * map.tileWidth,
-                y: lootY * map.tileHeight,
-                width: map.tileWidth,
-                height: map.tileHeight
-            });
+
+            const obj = new MapObject();
+            obj.name = type;
+            obj.type = "loot";
+            obj.x = lootX * map.tileWidth;
+            obj.y = lootY * map.tileHeight;
+            obj.width = map.tileWidth;
+            obj.height = map.tileHeight;
             obj.setProperty("itemType", type);
+            lootLayer.addObject(obj);
         }
     }
 
@@ -92,11 +115,11 @@ function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 
         let cx = x1;
         let cy = y1;
         while (cx !== x2) {
-            placeFloorWithLogic(tileLayer, cx, cy, map, true);
+            placeFloorWithLogic(cx, cy, map, tileset, tileLayer, true);
             cx += cx < x2 ? 1 : -1;
         }
         while (cy !== y2) {
-            placeFloorWithLogic(tileLayer, cx, cy, map, true);
+            placeFloorWithLogic(cx, cy, map, tileset, tileLayer, true);
             cy += cy < y2 ? 1 : -1;
         }
     }
@@ -130,42 +153,41 @@ function generateDungeon(map, tileLayer, roomCount = 10, roomMin = 5, roomMax = 
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            if (tileLayer.tileAt(x, y)?.id === TILE_WALL) {
-                collisionLayer.addObject({
-                    x: x * map.tileWidth,
-                    y: y * map.tileHeight,
-                    width: map.tileWidth,
-                    height: map.tileHeight
-                });
+            const tile = tileLayer.cellAt(x, y)?.tile;
+            if (tile && tile.id === TILE_WALL) {
+                const obj = new MapObject();
+                obj.x = x * map.tileWidth;
+                obj.y = y * map.tileHeight;
+                obj.width = map.tileWidth;
+                obj.height = map.tileHeight;
+                collisionLayer.addObject(obj);
             }
         }
     }
 
-    // Place enemies as objects in random rooms
+    layerEdit.apply();
+
     for (const room of rooms) {
-        const numEnemies = Math.floor(Math.random() * 3); // 0 to 2 enemies per room
+        const numEnemies = Math.floor(Math.random() * 3);
         for (let i = 0; i < numEnemies; i++) {
             const ex = room.x + Math.floor(Math.random() * room.w);
             const ey = room.y + Math.floor(Math.random() * room.h);
-
-            enemyLayer.addObject({
-                name: "enemy",
-                type: "enemy",
-                gid: 1,                 // firstgid of enemy tileset
-                x: ex * map.tileWidth,
-                y: ey * map.tileHeight,
-                width: 32,             // tile width of enemy sprite
-                height: 43             // tile height of enemy sprite
-            });
+            const enemy = new MapObject();
+            enemy.name = "enemy";
+            enemy.type = "enemy";
+            enemy.gid = 1;
+            enemy.x = ex * map.tileWidth;
+            enemy.y = ey * map.tileHeight;
+            enemy.width = map.tileWidth;
+            enemy.height = map.tileHeight;
+            enemyLayer.addObject(enemy);
         }
     }
 
-    tiled.alert("💥 Dungeon generated with floors, loot, collisions, and enemies!");
+    tiled.alert("✅ Dungeon generated successfully!");
 }
 
-// Expose globally
-this.generateDungeon = generateDungeon;
-
+// Menu hook
 tiled.registerAction("generateDungeon", function () {
     const map = tiled.activeAsset;
     if (!(map && map.isTileMap)) {
@@ -173,7 +195,7 @@ tiled.registerAction("generateDungeon", function () {
         return;
     }
     const layer = map.currentLayer;
-    if (!layer || layer.isGroupLayer) {
+    if (!layer || !layer.isTileLayer) {
         tiled.alert("Please select a tile layer.");
         return;
     }
@@ -183,3 +205,22 @@ tiled.registerAction("generateDungeon", function () {
 tiled.extendMenu("Map", [
     { action: "generateDungeon", before: "MapProperties" }
 ]);
+
+tiled.assetOpened.connect((asset) => {
+    if (!(asset && asset.isTileMap)) return;
+
+    const map = asset;
+    const layer = map.layerAt(0);
+    if (layer?.isTileLayer && layer.name === "Floor") {
+        const isEmpty = [...Array(map.height).keys()].every(y =>
+            [...Array(map.width).keys()].every(x =>
+                !layer.cellAt(x, y)?.tile
+            )
+        );
+
+        if (isEmpty) {
+            tiled.log("🧱 Generating dungeon because map is empty...");
+            generateDungeon(map, layer);
+        }
+    }
+});
