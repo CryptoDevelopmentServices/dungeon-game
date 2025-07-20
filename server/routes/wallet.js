@@ -63,8 +63,9 @@ router.get('/transactions', authenticate, async (req, res) => {
   try {
     const username = req.user.username;
     const type = req.query.type;
-    const count = Number(req.query.count);
-    const skip = Number(req.query.skip);
+    const page = Number(req.query.page);
+    const size = Number(req.query.size);
+    const skip = (page - 1) * size;
 
     if (!["send", "receive"].includes(type)) {
       return res.status(400).json({error: 'Invalid transaction type'});
@@ -72,17 +73,28 @@ router.get('/transactions', authenticate, async (req, res) => {
 
     const transactions = await methods.getTransactions(
         username,
-        count,
+        size,
         skip
     );
 
     const filtered_transactions = transactions
         .filter(tx => tx.category === type)
         .map(tx => {
-          return { txid: tx.txid, confs: tx.confirmations }
+          return { txid: tx.txid, confs: tx.confirmations, amount: Math.abs(tx.amount) }
         });
 
-    res.status(200).json({ transactions: filtered_transactions });
+    // We can check if there is a next page by checking there
+    // are txs after next skip
+    const next_txs = await methods.getTransactions(
+        username,
+        size,
+        skip + size
+    );
+
+    const filtered_next_txs = next_txs
+        .filter(tx => tx.category === type);
+
+    res.status(200).json({ transactions: filtered_transactions, has_next: filtered_next_txs.length > 0 });
 
   } catch (e) {
     console.error('[TRANSACTIONS ERROR]', e);

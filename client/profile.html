@@ -9,6 +9,23 @@
   <script type="module">
     import { getCurrentUser, logout } from './auth.js';
     const user = getCurrentUser();
+    const nav = document.getElementById('nav-links');
+
+    if (user) {
+      const balance = user.balance || "0";
+      nav.innerHTML = `
+        <a href="index.html">Home</a>
+        <a href="profile.html">Profile</a>
+        <span class="balance">🪙 ${parseFloat(balance).toFixed(2)} ADVC</span>
+        <a href="#" onclick="logout()">Logout</a>
+        `;
+      window.logout = logout;
+    } else {
+      nav.innerHTML = `
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+        `;
+    }
 
     if (!user) {
       window.location.href = 'index.html';
@@ -23,6 +40,7 @@
   </script>
 </head>
 <body>
+  <div class="navbar" id="nav-links"></div>
   <div class="container">
     <h1>🧙 Profile</h1>
     <p><strong>Username:</strong> <span id="username"></span></p>

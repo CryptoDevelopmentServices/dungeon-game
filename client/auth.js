@@ -20,7 +20,11 @@ export async function login() {
 
   const data = await res.json();
   if (data.success) {
-    localStorage.setItem('user', JSON.stringify(data.user));
+    const user = {
+      ...data.user,
+      access_token: res.headers.get("Authorization").split(' ')[1]
+    }
+    localStorage.setItem('user', JSON.stringify(user));
     window.location.href = 'index.html?mode=topdown';
   } else {
     messageBox.textContent = data.error || 'Login failed';
