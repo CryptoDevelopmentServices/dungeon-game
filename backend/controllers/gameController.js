@@ -1,3 +1,4 @@
+import methods from '../daemon/methods.js';
 import { User } from '../models/user.js';
 
 // Reward endpoint — adds ADVC to user balance
@@ -13,8 +14,15 @@ export const reward = async (req, res) => {
     const user = await User.findByPk(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.balance += amount;
-    await user.save();
+    await methods.moveAmount(
+      "",
+      user.username,
+      amount
+    );
+
+    await user.increment({
+      balance: amount
+    });
 
     res.json({ message: `Rewarded ${amount} ADVC`, balance: user.balance });
   } catch (error) {
@@ -56,8 +64,15 @@ export const withdraw = async (req, res) => {
 
     // TODO: Integrate with ADVC RPC to send coins here.
 
-    user.balance -= amount;
-    await user.save();
+    await methods.withdrawFrom(
+      user.username,
+      address,
+      amount
+    );
+
+    await user.decrement({
+      balance: amount
+    });
 
     res.json({ message: `Withdrawal of ${amount} ADVC requested`, balance: user.balance });
   } catch (error) {
