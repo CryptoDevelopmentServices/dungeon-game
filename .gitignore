@@ -5,3 +5,4 @@ frontend/assets/*backup.png
 tiles-scripts/dungeon-game-advc.tiled-session
 tiles-scripts/extensions/package-lock.json
 tiles-scripts/extensions/node_modules
+database/advc_game.sqlite
